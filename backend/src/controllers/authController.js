@@ -1,6 +1,8 @@
+// src/controllers/authController.js
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
+// 1. Hàm register của Hạnh (giữ nguyên)
 const register = async (req, res) => {
   try {
     const { name, email, password, role, phone, dormBlock, roomNumber } = req.body;
@@ -44,4 +46,32 @@ const register = async (req, res) => {
   }
 };
 
-module.exports = { register };
+// 2. Các hàm giữ chỗ (Chờ Huyền và Lệ code xong để thay thế)
+const login = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API login đang chờ Huyền tích hợp.'
+  });
+};
+
+const getMe = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API getMe đang chờ Lệ tích hợp.'
+  });
+};
+
+const updateProfile = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API updateProfile đang chờ Lệ tích hợp.'
+  });
+};
+
+// Export đủ 4 hàm để file authRoutes.js gọi không bị lỗi
+module.exports = {
+  register,
+  login,
+  getMe,
+  updateProfile
+};
