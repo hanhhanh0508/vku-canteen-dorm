@@ -1,59 +1,7 @@
-const User = require('../models/userModel');
-
-
-const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('-password');
-    
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-
-const updateProfile = async (req, res) => {
-  try {
-    const { phone, roomNumber, fullName } = req.body;
-
-    const user = await User.findById(req.user._id);
-
-    if (user) {
-      user.phone = phone || user.phone;
-      user.roomNumber = roomNumber || user.roomNumber;
-      user.fullName = fullName || user.fullName;
-
-      const updatedUser = await user.save();
-
-      res.status(200).json({
-        success: true,
-        message: 'Cập nhật thông tin thành công!',
-        data: {
-          _id: updatedUser._id,
-          fullName: updatedUser.fullName,
-          email: updatedUser.email,
-          phone: updatedUser.phone,
-          roomNumber: updatedUser.roomNumber,
-          role: updatedUser.role
-        }
-      });
-    } else {
-      res.status(404).json({ success: false, message: 'Không tìm thấy người dùng!' });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-module.exports = {
-// src/controllers/authController.js
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// 1. Hàm register của Hạnh (giữ nguyên)
+// 1. Đăng ký tài khoản (Hạnh)
 const register = async (req, res) => {
   try {
     const { name, email, password, role, phone, dormBlock, roomNumber } = req.body;
@@ -97,7 +45,7 @@ const register = async (req, res) => {
   }
 };
 
-// 2. Các hàm giữ chỗ (Chờ Huyền và Lệ code xong để thay thế)
+// 2. Đăng nhập (Hàm giữ chỗ cho Huyền)
 const login = async (req, res) => {
   res.status(200).json({
     success: true,
@@ -105,21 +53,58 @@ const login = async (req, res) => {
   });
 };
 
+// 3. Lấy thông tin cá nhân (Lệ)
 const getMe = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'API getMe đang chờ Lệ tích hợp.'
-  });
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng!' });
+    }
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
+// 4. Cập nhật thông tin cá nhân (Lệ)
 const updateProfile = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'API updateProfile đang chờ Lệ tích hợp.'
-  });
+  try {
+    const { phone, roomNumber, dormBlock, name, fullName } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.phone = phone || user.phone;
+      user.roomNumber = roomNumber || user.roomNumber;
+      user.dormBlock = dormBlock || user.dormBlock;
+      user.name = name || fullName || user.name;
+
+      const updatedUser = await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật thông tin thành công!',
+        data: {
+          _id: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          dormBlock: updatedUser.dormBlock,
+          roomNumber: updatedUser.roomNumber,
+          role: updatedUser.role
+        }
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'Không tìm thấy người dùng!' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
-// Export đủ 4 hàm để file authRoutes.js gọi không bị lỗi
 module.exports = {
   register,
   login,
