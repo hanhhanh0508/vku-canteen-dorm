@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const generateToken = require('../utils/generateToken');
 
 // 1. Đăng ký tài khoản (Hạnh)
 const register = async (req, res) => {
@@ -47,10 +48,55 @@ const register = async (req, res) => {
 
 // 2. Đăng nhập (Hàm giữ chỗ cho Huyền)
 const login = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'API login đang chờ Huyền tích hợp.'
-  });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập email và mật khẩu!'
+      });
+    }
+
+    // Tìm tài khoản theo email
+    const user = await User.findOne({
+      email: email.trim().toLowerCase()
+    });
+
+    // Kiểm tra email và mật khẩu
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email hoặc mật khẩu không chính xác!'
+      });
+    }
+
+    // Tạo JWT chứa ID người dùng
+    const token = generateToken(user._id.toString());
+
+    // Trả token và thông tin người dùng, không trả mật khẩu
+    return res.status(200).json({
+      success: true,
+      message: 'Đăng nhập thành công!',
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        dormBlock: user.dormBlock,
+        roomNumber: user.roomNumber
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi server!'
+    });
+  }
 };
 
 // 3. Lấy thông tin cá nhân (Lệ)
