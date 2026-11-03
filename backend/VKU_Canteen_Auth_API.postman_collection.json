@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "VKU Canteen Dorm - Auth Module",
-    "_postman_id": "vku-canteen-auth-collection-2026",
-    "description": "API Test Collection cho Module 1",
+    "name": "VKU Canteen Dorm - Auth & Canteen Module",
+    "_postman_id": "vku-canteen-auth-canteen-collection-2026",
+    "description": "API Test Collection cho Module 1 (Auth) & Module 2 (Canteen Management - Hạnh)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -120,6 +120,138 @@
             "api",
             "auth",
             "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Lấy danh sách Căn tin (Get All Canteens)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/canteens",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "canteens"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Xem chi tiết Căn tin (Get Canteen By ID)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/canteens/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "canteens",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Tạo Căn tin mới (Create Canteen)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer <TOKEN_CỦA_BẠN>",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Căn tin Khu A - Cô Ba\",\n  \"location\": \"Tầng 1 KTX Khu A\",\n  \"phone\": \"0905123456\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/canteens",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "canteens"
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. Cập nhật thông tin Căn tin (Update Canteen)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer <TOKEN_CỦA_BẠN>",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Căn tin Khu A - Cô Ba (Đã cập nhật)\",\n  \"phone\": \"0905999999\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/canteens/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "canteens",
+            ":id"
+          ]
+        }
+      }
+    },
+    {
+      "name": "9. Xóa Căn tin (Delete Canteen)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TOKEN_CỦA_BẠN>",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:5000/api/canteens/:id",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5000",
+          "path": [
+            "api",
+            "canteens",
+            ":id"
           ]
         }
       }

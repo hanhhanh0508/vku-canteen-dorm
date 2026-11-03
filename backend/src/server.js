@@ -8,12 +8,15 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
 const cors = require('cors');
+const canteenRoutes = require('./routes/canteenRoutes');
+
+// Nhúng tuyến đường API Căn tin
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+app.use('/api/canteens', canteenRoutes);
 // 1. Kết nối MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('\x1b[32m%s\x1b[0m', '✅ 1. Kết nối MongoDB Atlas THÀNH CÔNG!'))
