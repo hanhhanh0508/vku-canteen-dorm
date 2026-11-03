@@ -1,60 +1,102 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const path = require('path');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const Redis = require('ioredis');
-const cors = require('cors');
-const canteenRoutes = require('./routes/canteenRoutes');
+require('dotenv').config();
 
-// Nhúng tuyến đường API Căn tin
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+const statusRoutes = require('./routes/statusRoutes');
+const canteenRoutes = require('./routes/canteenRoutes');
+const foodRoutes = require('./routes/foodRoutes');         // Quản lý món ăn (Huyền)
+const categoryRoutes = require('./routes/categoryRoutes'); // Category & Menu Search (Lệ)
+
+// Import socket handler
+const initCanteenSocket = require('./sockets/canteenSocket');
 
 const app = express();
+const server = http.createServer(app);
 
-app.use(cors());
-app.use(express.json());
-app.use('/api/canteens', canteenRoutes);
-// 1. Kết nối MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('\x1b[32m%s\x1b[0m', '✅ 1. Kết nối MongoDB Atlas THÀNH CÔNG!'))
-  .catch((err) => console.error('\x1b[31m%s\x1b[0m', '❌ Lỗi kết nối MongoDB:', err.message));
-
-// 2. Kết nối Redis Cloud
-const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: Number(process.env.REDIS_PORT),
-  username: 'default',
-  password: process.env.REDIS_PASSWORD,
-  maxRetriesPerRequest: 0,
-  retryStrategy(times) {
-    if (times > 2) return null;
-    return Math.min(times * 500, 2000);
+// 1. Cấu hình Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH']
   }
 });
 
-redis.on('ready', () => {
-  console.log('\x1b[32m%s\x1b[0m', '✔ 2. Kết nối Redis Cloud THÀNH CÔNG!');
-});
+// 2. Cấu hình Redis với cơ chế bắt lỗi và ngắt vòng lặp retry
+try {
+  const redisOptions = {
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT),
+    username: 'default',
+    password: process.env.REDIS_PASSWORD,
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    maxRetriesPerRequest: 0,
+    retryStrategy: () => null // Không retry khi sai thông tin để tránh spam log
+  };
 
-redis.on('error', (err) => {
-  console.warn('\x1b[33m%s\x1b[0m', '⚠️ Trạng thái Redis:', err.message);
-});
+  const pubClient = new Redis(redisOptions);
+  const subClient = pubClient.duplicate();
 
-// 3. Gắn tuyến đường Auth
-const authRoutes = require('./routes/authRoutes');
+  pubClient.on('error', () => {});
+  subClient.on('error', () => {});
+
+  Promise.all([pubClient.connect(), subClient.connect()])
+    .then(() => {
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('✅ Kết nối Redis Adapter THÀNH CÔNG');
+    })
+    .catch(() => {
+      console.warn('⚠️ Redis Cloud xác thực thất bại. Hệ thống tự động chuyển sang In-memory Socket.');
+    });
+} catch (err) {
+  console.warn('⚠️ Bỏ qua Redis Adapter, chạy Socket.io mặc định.');
+}
+
+// Gắn io vào Express app để các controller có thể emit sự kiện
+app.set('io', io);
+
+// Khởi chạy socket logic
+initCanteenSocket(io);
+
+// 3. Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// 4. Routes
 app.use('/api/auth', authRoutes);
-// Đường dẫn quản lý món ăn của Huyền
-const foodRoutes = require('./routes/foodRoutes');
+app.use('/api/status', statusRoutes);
+app.use('/api/canteens', canteenRoutes);
 app.use('/api/foods', foodRoutes);
-
-// 4. Gắn tuyến đường Category & Menu Search (Lệ)
-const categoryRoutes = require('./routes/categoryRoutes');
 app.use('/api/categories', categoryRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+app.get('/', (req, res) => {
+  res.send('VKU Canteen & Dorm Delivery API đang hoạt động!');
 });
+
+// 5. Kết nối MongoDB & Start Server
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+});
+
+mongoose
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000
+  })
+  .then(() => {
+    console.log('✅ 1. Kết nối MongoDB Atlas THÀNH CÔNG!');
+  })
+  .catch((err) => {
+    console.error('❌ Lỗi kết nối MongoDB Atlas (kiểm tra lại DNS 8.8.8.8 hoặc mạng Wi-Fi):', err.message);
+  });
