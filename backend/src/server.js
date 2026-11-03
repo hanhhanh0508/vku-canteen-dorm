@@ -11,6 +11,9 @@ require('dotenv').config();
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const statusRoutes = require('./routes/statusRoutes');
+const canteenRoutes = require('./routes/canteenRoutes');
+const foodRoutes = require('./routes/foodRoutes');         // Quản lý món ăn (Huyền)
+const categoryRoutes = require('./routes/categoryRoutes'); // Category & Menu Search (Lệ)
 
 // Import socket handler
 const initCanteenSocket = require('./sockets/canteenSocket');
@@ -31,6 +34,7 @@ try {
   const redisOptions = {
     host: process.env.REDIS_HOST,
     port: Number(process.env.REDIS_PORT),
+    username: 'default',
     password: process.env.REDIS_PASSWORD,
     lazyConnect: true,
     enableOfflineQueue: false,
@@ -71,6 +75,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // 4. Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/status', statusRoutes);
+app.use('/api/canteens', canteenRoutes);
+app.use('/api/foods', foodRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.get('/', (req, res) => {
   res.send('VKU Canteen & Dorm Delivery API đang hoạt động!');
