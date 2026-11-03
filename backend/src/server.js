@@ -46,6 +46,9 @@ redis.on('error', (err) => {
 // 3. Gắn tuyến đường Auth
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+// Đường dẫn quản lý món ăn của Huyền
+const foodRoutes = require('./routes/foodRoutes');
+app.use('/api/foods', foodRoutes);
 
 // 4. Gắn tuyến đường Category & Menu Search (Lệ)
 const categoryRoutes = require('./routes/categoryRoutes');
