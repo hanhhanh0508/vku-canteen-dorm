@@ -11,8 +11,7 @@ const {
 } = require('../controllers/canteenController');
 
 // Import Middleware
-const { protect } = require('../middlewares/authMiddleware'); 
-const { checkRole } = require('../middlewares/roleMiddleware'); 
+
 
 // [GET] Xem danh sách & chi tiết Căn tin (Không bắt buộc đăng nhập)
 router.get('/', getAllCanteens);
