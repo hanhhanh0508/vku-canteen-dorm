@@ -13,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const statusRoutes = require('./routes/statusRoutes');
 const canteenRoutes = require('./routes/canteenRoutes');
 const foodRoutes = require('./routes/foodRoutes');         // Quản lý món ăn (Huyền)
+const canteenOrderRoutes = require('./routes/canteenOrderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes'); // Category & Menu Search (Lệ)
 
 // Import socket handler
@@ -78,6 +79,7 @@ app.use('/api/status', statusRoutes);
 app.use('/api/canteens', canteenRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/canteen-orders', canteenOrderRoutes);
 
 app.get('/', (req, res) => {
   res.send('VKU Canteen & Dorm Delivery API đang hoạt động!');
