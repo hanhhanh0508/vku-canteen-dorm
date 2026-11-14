@@ -10,6 +10,9 @@ const {
   deleteCanteen
 } = require('../controllers/canteenController');
 
+// Import Middleware
+
+
 // [GET] Xem danh sách & chi tiết Căn tin (Không bắt buộc đăng nhập)
 router.get('/', getAllCanteens);
 router.get('/:id', getCanteenById);
