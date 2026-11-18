@@ -11,7 +11,12 @@ const userSchema = new mongoose.Schema({
   },
   phone: { type: String, default: '' },
   dormBlock: { type: String, default: '' }, // Tòa KTX (vd: Tòa A, Tòa B)
-  roomNumber: { type: String, default: '' }  // Số phòng (vd: P.302)
+  roomNumber: { type: String, default: '' },  // Số phòng (vd: P.302)
+  status: {
+    type: String,
+    enum: ['pending', 'active', 'locked'],
+    default: 'active'
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

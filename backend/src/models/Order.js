@@ -31,6 +31,11 @@ const orderSchema = new mongoose.Schema({
     ref: 'Canteen',
     required: [true, 'Đơn hàng phải thuộc về một Căn tin!']
   },
+  shipper: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref:'User',
+    default: null
+  },
   items: {
     type: [orderItemSchema],
     required: true,

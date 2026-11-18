@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VKU Canteen & Dorm - Admin & Shipper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --brand: #0f5c4d;
+      --brand-dark: #0a3f35;
+      --brand-soft: #e3f1ed;
+      --accent: #f2a93b;
+      --ink: #16211e;
+      --muted: #6b7a75;
+      --line: #e3e9e6;
+      --bg: #f4f7f6;
+      --radius: 14px;
+    }
+    body {
+      font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    /* Top bar */
+    .topbar {
+      background: linear-gradient(120deg, var(--brand-dark), var(--brand));
+      color: #fff;
+      padding: .85rem 0;
+      box-shadow: 0 2px 12px rgba(10, 63, 53, .25);
+    }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: var(--accent); color: var(--brand-dark);
+      display: grid; place-items: center; font-size: 1.3rem;
+    }
+    .brand-title { font-weight: 700; line-height: 1.1; }
+    .brand-sub { font-size: .8rem; opacity: .75; }
+    .user-chip {
+      display: flex; align-items: center; gap: .6rem;
+      background: rgba(255,255,255,.12); border-radius: 999px;
+      padding: .3rem .9rem .3rem .3rem;
+    }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent); color: var(--brand-dark);
+      display: grid; place-items: center; font-weight: 700; font-size: .85rem;
+      flex-shrink: 0;
+    }
+    #userInfo { font-size: .88rem; font-weight: 500; }
+
+    /* Stats */
+    .stat-card {
+      background: #fff; border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 1rem 1.15rem;
+      display: flex; align-items: center; gap: .9rem; height: 100%;
+    }
+    .stat-icon {
+      width: 46px; height: 46px; border-radius: 12px;
+      display: grid; place-items: center; font-size: 1.35rem;
+      background: var(--brand-soft);
+    }
+    .stat-icon.amber { background: #fdf1db; }
+    .stat-icon.red { background: #fde8e8; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: .82rem; color: var(--muted); margin-top: .25rem; }
+
+    /* Tabs */
+    .nav-tabs { border-bottom: 1px solid var(--line); gap: .25rem; }
+    .nav-tabs .nav-link {
+      border: 0; color: var(--muted); font-weight: 600;
+      border-bottom: 3px solid transparent; border-radius: 0;
+      padding: .7rem 1.1rem;
+    }
+    .nav-tabs .nav-link:hover { color: var(--brand); }
+    .nav-tabs .nav-link.active {
+      color: var(--brand); background: transparent; border-bottom-color: var(--brand);
+    }
+
+    /* Panels & tables */
+    .panel {
+      background: #fff; border: 1px solid var(--line);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .panel-head {
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    .panel-head h5 { margin: 0; font-weight: 700; font-size: 1.05rem; }
+    .panel-head small { color: var(--muted); }
+    .table { margin: 0; }
+    .table thead th {
+      background: #f8faf9; color: var(--muted); font-weight: 600;
+      font-size: .8rem; border-bottom: 1px solid var(--line); padding: .8rem 1rem;
+      white-space: nowrap;
+    }
+    .table tbody td { padding: .9rem 1rem; border-color: var(--line); vertical-align: middle; }
+    .table-hover tbody tr:hover { background: #f8fbfa; }
+    .order-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--brand-soft); color: var(--brand-dark);
+      padding: .2rem .5rem; border-radius: 6px; font-size: .85rem; font-weight: 600;
+    }
+    .price { color: var(--brand-dark); font-weight: 700; white-space: nowrap; }
+    .dorm-chip {
+      display: inline-block; background: #fdf1db; color: #8a5a07;
+      border-radius: 8px; padding: .15rem .55rem; font-weight: 600; font-size: .85rem;
+    }
+
+    /* Status pills */
+    .pill {
+      display: inline-flex; align-items: center; gap: .4rem;
+      border-radius: 999px; padding: .28rem .75rem;
+      font-size: .78rem; font-weight: 600; white-space: nowrap;
+    }
+    .pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .pill-ready { background: #fdf1db; color: #8a5a07; }
+    .pill-delivering { background: #e0eefc; color: #1a5aa6; }
+    .pill-done, .pill-active { background: #e1f3e8; color: #1c7a43; }
+    .pill-locked, .pill-cancelled { background: #fde8e8; color: #b3261e; }
+    .pill-default { background: #eef1f0; color: var(--muted); }
+    .role-tag {
+      background: #eef1f0; color: var(--ink); border-radius: 8px;
+      padding: .2rem .6rem; font-size: .8rem; font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn { font-weight: 600; border-radius: 10px; }
+    .btn-brand { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .btn-brand:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
+    .btn-soft {
+      background: var(--brand-soft); color: var(--brand-dark); border-color: transparent;
+    }
+    .btn-soft:hover { background: #d2e8e2; color: var(--brand-dark); }
+
+    /* Empty / loading */
+    .state-box { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .state-box .emoji { font-size: 2.4rem; display: block; margin-bottom: .5rem; }
+
+    /* Toasts */
+    #toastBox {
+      position: fixed; top: 1rem; right: 1rem; z-index: 1100;
+      display: flex; flex-direction: column; gap: .6rem; max-width: min(92vw, 360px);
+    }
+    .toast-item {
+      background: #fff; border: 1px solid var(--line);
+      border-left: 5px solid var(--brand);
+      border-radius: 12px; padding: .8rem 1rem;
+      box-shadow: 0 10px 30px rgba(22, 33, 30, .15);
+      font-size: .9rem; font-weight: 500;
+      animation: toastIn .25s ease;
+    }
+    .toast-item.error { border-left-color: #b3261e; }
+    .toast-item.info { border-left-color: var(--accent); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+    /* Mobile: turn table rows into cards */
+    @media (max-width: 767.98px) {
+      .responsive-table thead { display: none; }
+      .responsive-table, .responsive-table tbody, .responsive-table tr, .responsive-table td { display: block; width: 100%; }
+      .responsive-table tr { padding: .75rem 1rem; border-bottom: 1px solid var(--line); }
+      .responsive-table td { border: 0; padding: .3rem 0; }
+      .responsive-table td[data-label]::before {
+        content: attr(data-label); display: block;
+        font-size: .72rem; color: var(--muted); font-weight: 600;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) { .toast-item { animation: none; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <div class="brand-mark">🛵</div>
+        <div>
+          <div class="brand-title">VKU Canteen & Dorm</div>
+          <div class="brand-sub">Admin & Shipper Portal</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <div class="user-chip">
+          <div class="avatar" id="userAvatar">U</div>
+          <span id="userInfo"></span>
+        </div>
+        <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container my-4">
+    <div id="toastBox" aria-live="polite"></div>
+
+    <!-- Role-based Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="roleTabs">
+      <li class="nav-item" id="navShipperTab">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabShipper" type="button">
+          📦 Delivery orders
+        </button>
+      </li>
+      <li class="nav-item" id="navAdminTab">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAdmin" type="button">
+          🛡️ User management
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- SHIPPER TAB -->
+      <div class="tab-pane fade show active" id="tabShipper">
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-4">
+            <div class="stat-card">
+              <div class="stat-icon amber">🍱</div>
+              <div><div class="stat-value" id="statReady">0</div><div class="stat-label">Ready for pickup</div></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="stat-card">
+              <div class="stat-icon">🛵</div>
+              <div><div class="stat-value" id="statDelivering">0</div><div class="stat-label">Delivering</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h5>Ready & ongoing deliveries</h5>
+              <small>Updates automatically when a new order is ready</small>
+            </div>
+            <button class="btn btn-sm btn-soft" id="btnRefreshOrders" onclick="loadShipperOrders()">🔄 Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle responsive-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Canteen</th>
+                  <th>Student & phone</th>
+                  <th>Dorm address</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="shipperOrdersBody">
+                <tr><td colspan="7"><div class="state-box"><span class="emoji">⏳</span>Loading orders...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN TAB -->
+      <div class="tab-pane fade" id="tabAdmin">
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-4">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div><div class="stat-value" id="statUsers">0</div><div class="stat-label">Total accounts</div></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="stat-card">
+              <div class="stat-icon red">🔒</div>
+              <div><div class="stat-value" id="statLocked">0</div><div class="stat-label">Locked accounts</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h5>System accounts</h5>
+              <small>Approve new accounts or lock access</small>
+            </div>
+            <button class="btn btn-sm btn-soft" onclick="loadUsers()">🔄 Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle responsive-table">
+              <thead>
+                <tr>
+                  <th>Full name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersBody">
+                <tr><td colspan="6"><div class="state-box"><span class="emoji">⏳</span>Loading users...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/constants.js"></script>
+  <script src="/js/admin-shipper.js"></script>
+</body>
+</html>
