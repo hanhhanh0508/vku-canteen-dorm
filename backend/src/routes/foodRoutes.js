@@ -1,48 +1,60 @@
+
 const express = require('express');
 const router = express.Router();
 
-// Kiểm tra đăng nhập và vai trò người dùng
 const {
   protect,
   authorize
 } = require('../middlewares/authMiddleware');
 
-// Các hàm xử lý món ăn, mình sẽ viết ở bước tiếp theo
+const upload = require('../middlewares/uploadMiddleware');
+
 const {
   createFood,
   getAllFoods,
   getFoodById,
   updateFood,
-  deleteFood
+  deleteFood,
+  toggleFoodAvailability
 } = require('../controllers/foodController');
 
-// Các đường dẫn bên dưới đều yêu cầu đăng nhập
+// Tất cả API đều yêu cầu đăng nhập
 router.use(protect);
 
-// Xem danh sách món ăn
+// Xem thực đơn
 router.get('/', getAllFoods);
-
-// Xem chi tiết một món ăn
 router.get('/:id', getFoodById);
 
-// Chỉ chủ căn tin hoặc quản trị viên được thêm món
+// Phân quyền chủ căn tin và admin
+const ownerOnly = authorize('canteen_owner', 'admin');
+
+// Thêm món có ảnh
 router.post(
   '/',
-  authorize('canteen_owner', 'admin'),
+  ownerOnly,
+  upload.single('image'),
   createFood
 );
 
-// Chỉ chủ căn tin hoặc quản trị viên được sửa món
+// Sửa món có ảnh
 router.put(
   '/:id',
-  authorize('canteen_owner', 'admin'),
+  ownerOnly,
+  upload.single('image'),
   updateFood
 );
 
-// Chỉ chủ căn tin hoặc quản trị viên được xóa món
+// Bật/tắt Còn món – Hết món
+router.patch(
+  '/:id/availability',
+  ownerOnly,
+  toggleFoodAvailability
+);
+
+// Xóa món
 router.delete(
   '/:id',
-  authorize('canteen_owner', 'admin'),
+  ownerOnly,
   deleteFood
 );
 
