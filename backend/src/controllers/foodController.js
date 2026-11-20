@@ -1,28 +1,43 @@
+
 const mongoose = require('mongoose');
+const fs = require('fs/promises');
+const path = require('path');
+
 const Food = require('../models/Food');
 const Canteen = require('../models/Canteen');
 const Category = require('../models/Category');
 
-// Kiểm tra ID có đúng định dạng MongoDB hay không
+// Kiểm tra ID MongoDB
 const validId = (value) =>
   typeof value === 'string' && /^[a-fA-F0-9]{24}$/.test(value);
 
-// Trả thông báo lỗi cho phía người dùng
+// Trả về thông báo lỗi
 const replyError = (res, status, message) =>
   res.status(status).json({
     success: false,
     message
   });
 
-// Admin hoặc đúng chủ căn tin mới được quản lý món
+// Kiểm tra quyền quản lý căn tin
 const canManage = (user, canteen) =>
   user.role === 'admin' ||
   String(canteen.owner) === String(user._id);
 
-// Kiểm tra và chỉ lấy những trường được phép nhập
+// Xóa ảnh đã upload nếu thao tác thất bại
+const removeUploadedFile = async (req) => {
+  if (!req.file) return;
+
+  try {
+    await fs.unlink(req.file.path);
+  } catch (error) {
+    console.error('Không thể dọn ảnh upload:', error.message);
+  }
+};
+
+// Kiểm tra dữ liệu món ăn
 const getFoodData = (body, creating = false) => {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw new Error('Dữ liệu phải là một đối tượng JSON!');
+    throw new Error('Dữ liệu món ăn không hợp lệ!');
   }
 
   const data = {};
@@ -41,24 +56,36 @@ const getFoodData = (body, creating = false) => {
     throw new Error('Vui lòng nhập tên món!');
   }
 
+  // Hỗ trợ giá dạng số và chuỗi từ FormData
   if (creating || body.price !== undefined) {
+    const price = Number(body.price);
+
     if (
-      typeof body.price !== 'number' ||
-      !Number.isFinite(body.price) ||
-      body.price < 0
+      body.price === undefined ||
+      body.price === null ||
+      String(body.price).trim() === '' ||
+      !Number.isFinite(price) ||
+      price < 0
     ) {
       throw new Error('Giá phải là số lớn hơn hoặc bằng 0!');
     }
 
-    data.price = body.price;
+    data.price = price;
   }
 
+  // Hỗ trợ boolean hoặc chuỗi từ FormData
   if (body.isAvailable !== undefined) {
-    if (typeof body.isAvailable !== 'boolean') {
+    if (
+      body.isAvailable !== true &&
+      body.isAvailable !== false &&
+      body.isAvailable !== 'true' &&
+      body.isAvailable !== 'false'
+    ) {
       throw new Error('isAvailable phải là true hoặc false!');
     }
 
-    data.isAvailable = body.isAvailable;
+    data.isAvailable =
+      body.isAvailable === true || body.isAvailable === 'true';
   }
 
   if (creating || body.category !== undefined) {
@@ -72,8 +99,10 @@ const getFoodData = (body, creating = false) => {
   return data;
 };
 
-// Phân biệt lỗi dữ liệu và lỗi server
+// Xử lý lỗi MongoDB
 const handleError = (res, error) => {
+  console.error('Food error:', error);
+
   if (
     error instanceof mongoose.Error.ValidationError ||
     error instanceof mongoose.Error.CastError
@@ -84,33 +113,31 @@ const handleError = (res, error) => {
   return replyError(res, 500, 'Lỗi server khi xử lý món ăn!');
 };
 
-// Danh mục phải đang hoạt động và dùng được cho căn tin
+// Kiểm tra danh mục
 const categoryMatches = async (categoryId, canteenId) => {
   const category = await Category.findById(categoryId);
 
-  return category &&
+  return Boolean(
+    category &&
     category.isActive &&
     (
       !category.canteen ||
       String(category.canteen) === String(canteenId)
-    );
+    )
+  );
 };
 
-// 1. Thêm món ăn
+// 1. THÊM MÓN ĂN CÓ ẢNH
 const createFood = async (req, res) => {
-  let data;
+  let saved = false;
 
   try {
-    data = getFoodData(req.body, true);
-  } catch (error) {
-    return replyError(res, 400, error.message);
-  }
+    const data = getFoodData(req.body, true);
 
-  if (!validId(req.body.canteen)) {
-    return replyError(res, 400, 'ID căn tin không hợp lệ!');
-  }
+    if (!validId(req.body.canteen)) {
+      return replyError(res, 400, 'ID căn tin không hợp lệ!');
+    }
 
-  try {
     const canteen = await Canteen.findById(req.body.canteen);
 
     if (!canteen) {
@@ -125,8 +152,12 @@ const createFood = async (req, res) => {
       return replyError(
         res,
         400,
-        'Danh mục phải đang hoạt động và dùng được cho căn tin này!'
+        'Danh mục không hợp lệ hoặc không thuộc căn tin này!'
       );
+    }
+
+    if (req.file) {
+      data.image = `/uploads/${req.file.filename}`;
     }
 
     const food = await Food.create({
@@ -134,17 +165,31 @@ const createFood = async (req, res) => {
       canteen: canteen._id
     });
 
+    saved = true;
+
     return res.status(201).json({
       success: true,
       message: 'Thêm món thành công!',
       data: food
     });
   } catch (error) {
+    if (error.message && (
+      error.message.includes('phải') ||
+      error.message.includes('Vui lòng') ||
+      error.message.includes('không hợp lệ')
+    )) {
+      return replyError(res, 400, error.message);
+    }
+
     return handleError(res, error);
+  } finally {
+    if (!saved) {
+      await removeUploadedFile(req);
+    }
   }
 };
 
-// 2. Xem danh sách món, có thể lọc theo căn tin hoặc danh mục
+// 2. XEM DANH SÁCH MÓN ĂN
 const getAllFoods = async (req, res) => {
   const filter = {};
 
@@ -186,7 +231,7 @@ const getAllFoods = async (req, res) => {
   }
 };
 
-// 3. Xem chi tiết một món
+// 3. XEM CHI TIẾT MÓN ĂN
 const getFoodById = async (req, res) => {
   if (!validId(req.params.id)) {
     return replyError(res, 400, 'ID món ăn không hợp lệ!');
@@ -210,33 +255,29 @@ const getFoodById = async (req, res) => {
   }
 };
 
-// 4. Sửa món ăn
+// 4. SỬA MÓN ĂN VÀ THAY ẢNH
 const updateFood = async (req, res) => {
-  if (!validId(req.params.id)) {
-    return replyError(res, 400, 'ID món ăn không hợp lệ!');
-  }
-
-  let data;
+  let saved = false;
 
   try {
-    data = getFoodData(req.body);
-  } catch (error) {
-    return replyError(res, 400, error.message);
-  }
+    if (!validId(req.params.id)) {
+      return replyError(res, 400, 'ID món ăn không hợp lệ!');
+    }
 
-  if (req.body.canteen !== undefined) {
-    return replyError(
-      res,
-      400,
-      'Không đổi căn tin của món qua API này!'
-    );
-  }
+    const data = getFoodData(req.body);
 
-  if (!Object.keys(data).length) {
-    return replyError(res, 400, 'Chưa có trường hợp lệ để cập nhật!');
-  }
+    if (req.body.canteen !== undefined) {
+      return replyError(
+        res,
+        400,
+        'Không được đổi căn tin của món!'
+      );
+    }
 
-  try {
+    if (!Object.keys(data).length && !req.file) {
+      return replyError(res, 400, 'Chưa có dữ liệu để cập nhật!');
+    }
+
     const food = await Food.findById(req.params.id);
 
     if (!food) {
@@ -246,7 +287,7 @@ const updateFood = async (req, res) => {
     const canteen = await Canteen.findById(food.canteen);
 
     if (!canteen) {
-      return replyError(res, 404, 'Căn tin của món không còn tồn tại!');
+      return replyError(res, 404, 'Căn tin không còn tồn tại!');
     }
 
     if (!canManage(req.user, canteen)) {
@@ -261,16 +302,16 @@ const updateFood = async (req, res) => {
       data.category &&
       !(await categoryMatches(data.category, food.canteen))
     ) {
-      return replyError(
-        res,
-        400,
-        'Danh mục phải đang hoạt động và dùng được cho căn tin này!'
-      );
+      return replyError(res, 400, 'Danh mục không hợp lệ!');
     }
 
-    // Chỉ cập nhật những trường đã kiểm tra
+    if (req.file) {
+      data.image = `/uploads/${req.file.filename}`;
+    }
+
     Object.assign(food, data);
     await food.save();
+    saved = true;
 
     return res.status(200).json({
       success: true,
@@ -278,11 +319,23 @@ const updateFood = async (req, res) => {
       data: food
     });
   } catch (error) {
+    if (error.message && (
+      error.message.includes('phải') ||
+      error.message.includes('Vui lòng') ||
+      error.message.includes('không hợp lệ')
+    )) {
+      return replyError(res, 400, error.message);
+    }
+
     return handleError(res, error);
+  } finally {
+    if (!saved) {
+      await removeUploadedFile(req);
+    }
   }
 };
 
-// 5. Xóa món ăn
+// 5. XÓA MÓN ĂN
 const deleteFood = async (req, res) => {
   if (!validId(req.params.id)) {
     return replyError(res, 400, 'ID món ăn không hợp lệ!');
@@ -298,7 +351,7 @@ const deleteFood = async (req, res) => {
     const canteen = await Canteen.findById(food.canteen);
 
     if (!canteen) {
-      return replyError(res, 404, 'Căn tin của món không còn tồn tại!');
+      return replyError(res, 404, 'Căn tin không còn tồn tại!');
     }
 
     if (!canManage(req.user, canteen)) {
@@ -320,10 +373,63 @@ const deleteFood = async (req, res) => {
   }
 };
 
+// 6. BẬT/TẮT CÒN MÓN – HẾT MÓN
+const toggleFoodAvailability = async (req, res) => {
+  if (!validId(req.params.id)) {
+    return replyError(res, 400, 'ID món ăn không hợp lệ!');
+  }
+
+  const { isAvailable } = req.body || {};
+
+  if (typeof isAvailable !== 'boolean') {
+    return replyError(
+      res,
+      400,
+      'isAvailable phải là true hoặc false!'
+    );
+  }
+
+  try {
+    const food = await Food.findById(req.params.id);
+
+    if (!food) {
+      return replyError(res, 404, 'Không tìm thấy món ăn!');
+    }
+
+    const canteen = await Canteen.findById(food.canteen);
+
+    if (!canteen) {
+      return replyError(res, 404, 'Căn tin không tồn tại!');
+    }
+
+    if (!canManage(req.user, canteen)) {
+      return replyError(
+        res,
+        403,
+        'Bạn không có quyền thay đổi trạng thái món này!'
+      );
+    }
+
+    food.isAvailable = isAvailable;
+    await food.save();
+
+    return res.status(200).json({
+      success: true,
+      message: isAvailable
+        ? 'Món đã chuyển sang Còn món!'
+        : 'Món đã chuyển sang Hết món!',
+      data: food
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
 module.exports = {
   createFood,
   getAllFoods,
   getFoodById,
   updateFood,
-  deleteFood
+  deleteFood,
+  toggleFoodAvailability
 };
