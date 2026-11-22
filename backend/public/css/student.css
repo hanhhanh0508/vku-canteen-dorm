@@ -1,0 +1,574 @@
+/* backend/public/css/student.css */
+/* VKU Canteen & Dorm Delivery - Student Portal Design System */
+
+:root {
+  /* Brand Colors */
+  --vk-primary: #0057B8;
+  --vk-primary-dark: #004595;
+  --vk-primary-light: #e8f1fb;
+  --vk-primary-focus: rgba(0, 87, 184, 0.16);
+
+  /* Warm Accent */
+  --vk-accent: #f97316;
+  --vk-accent-light: #fff7ed;
+
+  /* Surfaces & Layout */
+  --vk-bg: #F4F7FB;
+  --vk-surface: #FFFFFF;
+  --vk-border: #E2E8F0;
+  --vk-border-subtle: #EDF2F7;
+
+  /* Typography */
+  --vk-text: #1E293B;
+  --vk-text-muted: #64748B;
+
+  /* Semantic Feedback Tokens */
+  --vk-success: #16A34A;
+  --vk-warning: #D97706;
+  --vk-info: #0284C7;
+  --vk-danger: #DC2626;
+
+  /* Shape & Shadows */
+  --vk-radius-sm: 6px;
+  --vk-radius-md: 10px;
+  --vk-radius-lg: 14px;
+  --vk-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --vk-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --vk-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--vk-bg);
+  color: var(--vk-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Accessibility Focus */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--vk-primary);
+  outline-offset: 2px;
+}
+
+
+/* Header */
+.vk-header {
+  background-color: var(--vk-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 35, 75, 0.12);
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.vk-header .brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vk-header .navbar-brand {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.portal-tag {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-status-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.btn-signout {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 0.825rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--vk-radius-sm);
+  transition: all 0.18s ease-in-out;
+}
+
+.btn-signout:hover, .btn-signout:focus {
+  background-color: #ffffff;
+  color: var(--vk-primary);
+  border-color: #ffffff;
+}
+
+/* Hero Intro Banner */
+.hero-intro-card {
+  background: linear-gradient(135deg, #ffffff 0%, var(--vk-primary-light) 100%);
+  border: 1px solid var(--vk-border);
+  border-radius: var(--vk-radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--vk-shadow-sm);
+}
+
+.hero-intro-card h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--vk-primary-dark);
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.3px;
+}
+
+.hero-intro-card p {
+  color: var(--vk-text-muted);
+  font-size: 0.925rem;
+  margin: 0;
+}
+
+/* VKU Standard Cards */
+.vk-card {
+  background-color: var(--vk-surface);
+  border: 1px solid var(--vk-border);
+  border-radius: var(--vk-radius-lg);
+  box-shadow: var(--vk-shadow);
+  overflow: hidden;
+}
+
+.vk-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--vk-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vk-card-header h2, .vk-card-header h3, .vk-card-header h4, .vk-card-header h5 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--vk-text);
+  margin: 0;
+}
+
+/* Form Controls */
+.form-label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--vk-text);
+  margin-bottom: 0.35rem;
+}
+
+.form-select, .form-control {
+  border: 1px solid var(--vk-border);
+  border-radius: var(--vk-radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--vk-text);
+  background-color: var(--vk-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: var(--vk-primary);
+  box-shadow: 0 0 0 3px var(--vk-primary-focus);
+}
+
+/* Food Card Grid */
+.food-card {
+  background-color: var(--vk-surface);
+  border: 1px solid var(--vk-border);
+  border-radius: var(--vk-radius-md);
+  box-shadow: var(--vk-shadow);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.food-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--vk-shadow-hover);
+  border-color: #cbd5e1;
+}
+
+.food-card-img-wrap {
+  width: 100%;
+  height: 160px;
+  background-color: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.food-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.food-card:hover .food-card-img {
+  transform: scale(1.03);
+}
+
+.food-card-img-placeholder {
+  width: 100%;
+  height: 160px;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid var(--vk-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--vk-text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  gap: 0.25rem;
+}
+
+.food-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.food-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.food-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vk-text);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.food-desc {
+  font-size: 0.825rem;
+  color: var(--vk-text-muted);
+  line-height: 1.45;
+  margin-bottom: 0.85rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.food-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--vk-border-subtle);
+}
+
+.food-price {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--vk-primary);
+  letter-spacing: -0.2px;
+}
+
+/* Badges */
+.badge-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.badge-status.available {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-status.sold-out {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-status.closed {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+/* Primary Button */
+.vk-btn-primary {
+  background-color: var(--vk-primary);
+  border: 1px solid var(--vk-primary);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--vk-radius-sm);
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.vk-btn-primary:hover:not(:disabled) {
+  background-color: var(--vk-primary-dark);
+  border-color: var(--vk-primary-dark);
+  color: #ffffff;
+}
+
+.vk-btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.vk-btn-primary:disabled {
+  background-color: #94a3b8;
+  border-color: #94a3b8;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.vk-btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--vk-border);
+  color: var(--vk-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--vk-radius-sm);
+  transition: all 0.15s ease;
+}
+
+.vk-btn-outline:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--vk-primary);
+}
+
+/* Sticky Cart on Desktop */
+@media (min-width: 992px) and (min-height: 620px) {
+  .sticky-cart-container {
+    position: sticky;
+    top: 4.85rem;
+    z-index: 1010;
+  }
+}
+
+/* Cart Item Rows */
+.cart-list {
+  max-height: 290px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.cart-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--vk-border-subtle);
+  gap: 0.5rem;
+}
+
+.cart-item-row:last-child {
+  border-bottom: none;
+}
+
+.cart-item-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--vk-text);
+  margin-bottom: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cart-item-price {
+  font-size: 0.8rem;
+  color: var(--vk-text-muted);
+}
+
+.qty-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background-color: #f8fafc;
+  padding: 2px 4px;
+  border: 1px solid var(--vk-border);
+  border-radius: var(--vk-radius-sm);
+}
+
+.btn-qty {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background-color: #ffffff;
+  color: var(--vk-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-qty:hover {
+  background-color: var(--vk-primary-light);
+  color: var(--vk-primary);
+}
+
+.qty-display {
+  font-size: 0.825rem;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+  color: var(--vk-text);
+}
+
+.btn-remove-item {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  padding: 0 0.25rem;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.btn-remove-item:hover {
+  color: var(--vk-danger);
+}
+
+/* Empty State Component */
+.empty-state-wrap {
+  text-align: center;
+  padding: 2.25rem 1rem;
+  color: var(--vk-text-muted);
+}
+
+.empty-state-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 0.75rem auto;
+  color: #94a3b8;
+  stroke-width: 1.5;
+}
+
+.empty-state-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--vk-text);
+  margin-bottom: 0.25rem;
+}
+
+.empty-state-desc {
+  font-size: 0.825rem;
+  color: var(--vk-text-muted);
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+/* Table Order History */
+.table-order-history {
+  margin-bottom: 0;
+}
+
+.table-order-history th {
+  background-color: #f8fafc;
+  color: var(--vk-text-muted);
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--vk-border);
+}
+
+.table-order-history td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--vk-border-subtle);
+}
+
+.table-order-history tr:last-child td {
+  border-bottom: none;
+}
+
+/* Modal Content Styling */
+.modal-content {
+  border-radius: var(--vk-radius-lg);
+  border: 1px solid var(--vk-border);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--vk-border);
+  padding: 1.15rem 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--vk-border);
+  padding: 1rem 1.5rem;
+}
+
+/* Toast Customization */
+.toast-container {
+  z-index: 1090;
+}
+
+.toast {
+  border-radius: var(--vk-radius-md);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive utilities */
+@media (max-width: 991.98px) {
+  .hero-intro-card {
+    padding: 1rem;
+  }
+  .hero-intro-card h1 {
+    font-size: 1.2rem;
+  }
+}
