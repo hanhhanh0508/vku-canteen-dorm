@@ -1,6 +1,10 @@
 const Order = require('../models/Order');
 const Food = require('../models/Food');
 const Canteen = require('../models/Canteen');
+const {
+  ALLOWED_DORM_BLOCKS,
+  isValidObjectId
+} = require('../validators/orderValidator');
 
 /**
  * @desc    Sinh viên tạo đơn đặt món về KTX
@@ -22,11 +26,11 @@ const createOrder = async (req, res) => {
 
     const targetCanteenId = canteenId || canteenFromBody;
 
-    // 1. Kiểm tra Căn tin có tồn tại
-    if (!targetCanteenId) {
+    // 1. Kiểm tra ID Căn tin hợp lệ & Tồn tại
+    if (!targetCanteenId || !isValidObjectId(String(targetCanteenId))) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp ID Căn tin đặt món (canteenId)!'
+        message: 'Vui lòng cung cấp ID Căn tin hợp lệ!'
       });
     }
 
@@ -53,51 +57,85 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // 3. Kiểm tra địa chỉ giao nhận KTX
-    const finalDormBlock = (dormBlock || req.user.dormBlock || '').trim();
-    const finalRoomNumber = (roomNumber || req.user.roomNumber || '').trim();
-    const finalPhone = (phone || req.user.phone || '').trim();
-
-    if (!finalDormBlock) {
+    // 3. Kiểm tra Tòa KTX
+    const finalDormBlock = typeof dormBlock === 'string' ? dormBlock.trim() : '';
+    if (!finalDormBlock || !ALLOWED_DORM_BLOCKS.includes(finalDormBlock)) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng nhập Tòa KTX nhận hàng (vd: Khu A, Khu B, Khu K...)!'
+        message: 'Tòa KTX không hợp lệ. Vui lòng chọn Khu A, Khu B hoặc Khu K.'
       });
     }
 
+    // 4. Kiểm tra Số phòng KTX
+    const finalRoomNumber = typeof roomNumber === 'string' ? roomNumber.trim() : '';
     if (!finalRoomNumber) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng nhập Số phòng KTX nhận hàng (vd: P.302)!'
+        message: 'Vui lòng cung cấp Số phòng KTX!'
       });
     }
 
-    if (!finalPhone) {
+    if (finalRoomNumber.length < 1 || finalRoomNumber.length > 20) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp Số điện thoại liên hệ nhận hàng!'
+        message: 'Số phòng KTX phải có độ dài từ 1 đến 20 ký tự!'
       });
     }
 
-    // 4. Lấy chi tiết món ăn từ DB, kiểm tra tính hợp lệ và tính tổng tiền
+    if (/<[^>]*>/i.test(finalRoomNumber) || /[<>{}[\]\\\/`^~|&;$%="']/.test(finalRoomNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Số phòng KTX chứa ký tự không hợp lệ!'
+      });
+    }
+
+    // 5. Kiểm tra Số điện thoại
+    const finalPhone = typeof phone === 'string' ? phone.trim() : '';
+    if (!finalPhone || !/^0[35789]\d{8}$/.test(finalPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam 10 số bắt đầu bằng 0 (vd: 0901234567).'
+      });
+    }
+
+    // 6. Kiểm tra Ghi chú (nếu có)
+    let finalNote = '';
+    if (note !== undefined && note !== null) {
+      if (typeof note !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Ghi chú phải là chuỗi ký tự!'
+        });
+      }
+      finalNote = note.trim();
+      if (finalNote.length > 200) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ghi chú không được vượt quá 200 ký tự!'
+        });
+      }
+    }
+
+    // 7. Lấy chi tiết món ăn từ DB, kiểm tra tính hợp lệ và tính tổng tiền
     let totalAmount = 0;
     const processedItems = [];
 
-    for (const item of items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       const foodId = item.foodId || item.food;
       const quantity = Number(item.quantity);
 
-      if (!foodId) {
+      if (!foodId || !isValidObjectId(String(foodId))) {
         return res.status(400).json({
           success: false,
-          message: 'Mỗi món ăn phải có ID món (foodId)!'
+          message: `ID món ăn tại vị trí ${i + 1} không hợp lệ!`
         });
       }
 
-      if (!quantity || quantity < 1) {
+      if (!Number.isInteger(quantity) || quantity < 1) {
         return res.status(400).json({
           success: false,
-          message: 'Số lượng món đặt phải tối thiểu là 1!'
+          message: 'Số lượng món đặt phải là số nguyên lớn hơn hoặc bằng 1!'
         });
       }
 
@@ -117,11 +155,11 @@ const createOrder = async (req, res) => {
         });
       }
 
-      // Kiểm tra món còn phục vụ không
+      // Kiểm tra món còn phục vụ không (isAvailable)
       if (!foodDoc.isAvailable) {
         return res.status(400).json({
           success: false,
-          message: `Món "${foodDoc.name}" hiện đang tạm ngưng phục vụ!`
+          message: `Món '${foodDoc.name}' hiện đã hết món.`
         });
       }
 
@@ -135,7 +173,7 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // 5. Khởi tạo đơn hàng mới
+    // 8. Khởi tạo đơn hàng mới (Bảo mật: student gắn từ req.user, status & totalAmount không lấy từ client)
     const newOrder = await Order.create({
       student: studentId,
       canteen: targetCanteenId,
@@ -144,7 +182,7 @@ const createOrder = async (req, res) => {
       dormBlock: finalDormBlock,
       roomNumber: finalRoomNumber,
       phone: finalPhone,
-      note: (note || '').trim(),
+      note: finalNote,
       status: 'Chờ xác nhận'
     });
 
@@ -154,7 +192,7 @@ const createOrder = async (req, res) => {
       .populate('canteen', 'name location phone')
       .populate('items.food', 'name price image');
 
-    // 6. Phát sự kiện Socket.io thời gian thực tới phòng của Căn tin (để Căn tin nhận thông báo ngay)
+    // 9. Phát sự kiện Socket.io thời gian thực tới phòng của Căn tin
     const io = req.app.get('io');
     if (io) {
       const canteenRoom = `canteen_${targetCanteenId}`;
@@ -212,6 +250,13 @@ const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!isValidObjectId(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng.'
+      });
+    }
+
     const order = await Order.findById(id)
       .populate('student', 'name email phone dormBlock roomNumber')
       .populate('canteen', 'name location phone owner')
@@ -220,23 +265,29 @@ const getOrderById = async (req, res) => {
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Không tìm thấy đơn hàng!'
+        message: 'Không tìm thấy đơn hàng.'
       });
     }
 
     // Kiểm tra quyền truy cập chi tiết đơn:
-    // Người dùng là sinh viên tạo đơn HOẶC là admin, shipper, hoặc chủ căn tin
-    const isOwnerStudent = order.student && order.student._id.equals(req.user._id);
+    // 1. Sinh viên phải là người tạo ra đơn hàng này
+    const userId = req.user._id || req.user.id;
+    const studentOwnerId = order.student?._id || order.student;
+    const isOwnerStudent = studentOwnerId && studentOwnerId.toString() === userId.toString();
+
+    // 2. Quyền đặc quyền: Admin hoặc Shipper
     const isPrivileged = ['admin', 'shipper'].includes(req.user.role);
+
+    // 3. Chủ Căn tin sở hữu quán nhận đơn này
     const isCanteenOwner = req.user.role === 'canteen_owner' && 
       order.canteen && 
       order.canteen.owner && 
-      order.canteen.owner.equals(req.user._id);
+      order.canteen.owner.toString() === userId.toString();
 
     if (!isOwnerStudent && !isPrivileged && !isCanteenOwner) {
       return res.status(403).json({
         success: false,
-        message: 'Bạn không có quyền xem thông tin chi tiết đơn hàng này!'
+        message: 'Bạn không có quyền xem đơn hàng này.'
       });
     }
 
@@ -261,7 +312,14 @@ const getOrderById = async (req, res) => {
 const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const studentId = req.user._id;
+    const studentId = req.user._id || req.user.id;
+
+    if (!isValidObjectId(id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy đơn hàng cần hủy!'
+      });
+    }
 
     const order = await Order.findById(id);
 
@@ -322,4 +380,3 @@ module.exports = {
   getOrderById,
   cancelOrder
 };
-
