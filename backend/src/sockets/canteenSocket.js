@@ -1,21 +1,15 @@
-/**
- * Quản lý các kết nối và sự kiện thời gian thực (Real-time)
- * Tích hợp cả Phase 2 (Trạng thái Căn tin/Menu) & Module 3 (Đặt hàng KTX & Giao hàng)
- */
+const APP_CONSTANTS = require('../../public/js/constants');
+const { SOCKET_EVENTS, ORDER_STATUS } = APP_CONSTANTS;
+
 const initCanteenSocket = (io) => {
   io.on('connection', (socket) => {
     console.log(`⚡ [Socket.io] Client đã kết nối: ${socket.id}`);
 
-    // ==========================================
-    // 1. THAM GIA / RỜI PHÒNG (ROOMS)
-    // ==========================================
-
-    // Căn tin tham gia phòng quản lý của quán (Hỗ trợ cả tên sự kiện Phase 2 & Module 3)
+    // 1. Tham gia phòng theo vai trò / ID
     const handleJoinCanteen = (canteenId) => {
       if (canteenId) {
-        const room = `canteen_${canteenId}`;
-        socket.join(room);
-        console.log(`🏪 Socket ${socket.id} đã vào phòng: ${room}`);
+        socket.join(`canteen_${canteenId}`);
+        console.log(`🏪 Socket ${socket.id} đã vào phòng: canteen_${canteenId}`);
       }
     };
     socket.on('canteen:join', handleJoinCanteen);
@@ -23,13 +17,11 @@ const initCanteenSocket = (io) => {
 
     socket.on('canteen:leave', (canteenId) => {
       if (canteenId) {
-        const room = `canteen_${canteenId}`;
-        socket.leave(room);
-        console.log(`🚪 Socket ${socket.id} đã rời phòng: ${room}`);
+        socket.leave(`canteen_${canteenId}`);
+        console.log(`🚪 Socket ${socket.id} đã rời phòng: canteen_${canteenId}`);
       }
     });
 
-    // Sinh viên tham gia phòng cá nhân để nhận trạng thái đơn hàng (Lệ)
     socket.on('join_student_room', (studentId) => {
       if (studentId) {
         socket.join(`student_${studentId}`);
@@ -37,21 +29,16 @@ const initCanteenSocket = (io) => {
       }
     });
 
-    // Shipper KTX tham gia phòng chung để săn đơn sẵn sàng giao (Hạnh)
     socket.on('join_shipper_room', () => {
       socket.join('shippers_dorm_vku');
       console.log(`🛵 Socket ${socket.id} đã vào phòng: shippers_dorm_vku`);
     });
 
-    // ==========================================
-    // 2. SỰ KIỆN REALTIME MODULE 3 (ORDERS)
-    // ==========================================
-
-    // Sự kiện 1: Sinh viên (Lệ) tạo đơn hàng mới -> Báo cho Căn tin (Huyền)
-    socket.on('new_order_created', (orderData) => {
+    // 2. Sự kiện 1: Sinh viên tạo đơn hàng mới -> Báo cho Căn tin
+    socket.on(SOCKET_EVENTS.ORDER_CREATED, (orderData) => {
       const { canteenId, orderId, dormBuilding, roomNumber } = orderData;
       if (canteenId) {
-        io.to(`canteen_${canteenId}`).emit('receive_new_order', {
+        io.to(`canteen_${canteenId}`).emit(SOCKET_EVENTS.ORDER_CREATED, {
           message: `Có đơn hàng KTX mới (#${orderId}) tại ${dormBuilding} - Phòng ${roomNumber}!`,
           order: orderData,
           timestamp: new Date()
@@ -59,13 +46,13 @@ const initCanteenSocket = (io) => {
       }
     });
 
-    // Sự kiện 2: Căn tin (Huyền) đổi trạng thái đơn -> Báo cho Shipper (Hạnh) & Sinh viên (Lệ)
-    socket.on('order_status_updated', (updateData) => {
+    // 3. Sự kiện 2: Đổi trạng thái đơn -> Báo cho Sinh viên & Shipper
+    socket.on(SOCKET_EVENTS.ORDER_STATUS_UPDATED, (updateData) => {
       const { orderId, studentId, status, canteenName, dormBuilding, roomNumber } = updateData;
 
-      // Cập nhật trạng thái đơn mới nhất cho Sinh viên đặt hàng
+      // Báo cập nhật trạng thái cho Sinh viên
       if (studentId) {
-        io.to(`student_${studentId}`).emit('order_status_changed', {
+        io.to(`student_${studentId}`).emit(SOCKET_EVENTS.ORDER_STATUS_UPDATED, {
           message: `Đơn hàng #${orderId} của bạn đã chuyển sang trạng thái: ${status}`,
           orderId,
           status,
@@ -73,19 +60,25 @@ const initCanteenSocket = (io) => {
         });
       }
 
-      // Nếu trạng thái là 'Sẵn sàng giao', phát tín hiệu ngay lập tức tới đội ngũ Shipper KTX
-      if (status === 'Sẵn sàng giao') {
-        io.to('shippers_dorm_vku').emit('order_ready_for_delivery', {
+      // Nếu trạng thái là 'Sẵn sàng giao', phát sự kiện 'order_ready' cho Shipper KTX
+      if (status === ORDER_STATUS.READY) {
+        io.to('shippers_dorm_vku').emit(SOCKET_EVENTS.ORDER_READY, {
           message: `Đơn mới sẵn sàng giao tại ${canteenName} -> Giao tới ${dormBuilding} (${roomNumber})`,
           order: updateData,
           timestamp: new Date()
         });
       }
+
+      // Nếu trạng thái là 'Hoàn thành', phát sự kiện 'order_completed'
+      if (status === ORDER_STATUS.COMPLETED && studentId) {
+        io.to(`student_${studentId}`).emit(SOCKET_EVENTS.ORDER_COMPLETED, {
+          message: `Đơn hàng #${orderId} đã giao hoàn tất!`,
+          orderId,
+          timestamp: new Date()
+        });
+      }
     });
 
-    // ==========================================
-    // 3. NGẮT KẾT NỐI
-    // ==========================================
     socket.on('disconnect', (reason) => {
       console.log(`❌ [Socket.io] Client đã ngắt kết nối: ${socket.id} (Lý do: ${reason})`);
     });
